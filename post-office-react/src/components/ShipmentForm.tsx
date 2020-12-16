@@ -3,13 +3,18 @@ import { Redirect } from "react-router-dom";
 import { Formik, Field, Form } from "formik";
 import { Select, MenuItem, Button } from "@material-ui/core";
 import * as yup from "yup";
-import DatePicker from "../components/DatePicker";
 import FormTextField from "./FormTextField";
-import axios from "axios";
-import "./ShipmentForm.css";
+import ShipmentAPI from "../api/ShipmentAPI";
+import "date-fns";
+import DateFnsUtils from "@date-io/date-fns";
+import {
+    MuiPickersUtilsProvider,
+    KeyboardDatePicker,
+} from "@material-ui/pickers";
+import "./Form.css";
+import { Airport } from "../interfaces/Airport";
 
 const ShipmentForm: React.FC = () => {
-    const [error, setError] = useState("");
     const [shipmentId, setShipmentId] = useState("");
 
     const validationSchema = yup.object().shape({
@@ -19,10 +24,7 @@ const ShipmentForm: React.FC = () => {
                 /^[a-zA-Z0-9]{3}-[a-zA-Z0-9]{6}$/,
                 "Shipment number does not match the required format."
             )
-            .required("Shipment number is required.")
-            .test("shipmentNumber", error, function () {
-                return error !== "";
-            }),
+            .required("Shipment number is required."),
         flightNumber: yup
             .string()
             .matches(
@@ -30,11 +32,11 @@ const ShipmentForm: React.FC = () => {
                 "Flight number does not match the required format."
             )
             .required("Flight number is required."),
-        flightDate: yup.string(),
+        flightDate: yup.date().required(),
     });
 
     if (!!shipmentId) {
-        return <Redirect to={`/shipments/${shipmentId}`} />;
+        return <Redirect to={`/add/${shipmentId}`} />;
     }
 
     return (
@@ -42,7 +44,7 @@ const ShipmentForm: React.FC = () => {
             <Formik
                 initialValues={{
                     shipmentNumber: "",
-                    airport: 1,
+                    airport: Airport.TLL,
                     flightNumber: "",
                     flightDate: new Date(),
                     bags: [],
@@ -51,28 +53,20 @@ const ShipmentForm: React.FC = () => {
                 validationSchema={validationSchema}
                 onSubmit={(data, { setSubmitting }) => {
                     setSubmitting(true);
-                    setError("");
-                    axios
-                        .post("http://localhost:5000/api/shipments", {
-                            shipmentNumber: data.shipmentNumber,
-                            airport: data.airport,
-                            flightNumber: data.flightNumber,
-                            flightDate: data.flightDate,
-                            bags: data.bags,
-                            isFinalized: data.isFinalized,
-                        })
-                        .then((response) => {
-                            setShipmentId(response.data.id);
-                        })
-                        .catch((error) => {
-                            console.log("Peaks validatsiooni vea andma.");
-                            console.log(error);
-                            setError("Shipment number must be unique.");
-                        });
+                    ShipmentAPI.createShipment({
+                        shipmentNumber: data.shipmentNumber,
+                        airport: data.airport,
+                        flightNumber: data.flightNumber,
+                        flightDate: data.flightDate,
+                        bags: [],
+                        isFinalized: false,
+                    }).then((id) => {
+                        setShipmentId(id);
+                    });
                     setSubmitting(false);
                 }}
             >
-                {({ isSubmitting }) => (
+                {({ isSubmitting, values, setFieldValue }) => (
                     <Form>
                         <div>
                             <div>Shipment number</div>
@@ -89,13 +83,13 @@ const ShipmentForm: React.FC = () => {
                                 as={Select}
                                 style={{ width: 280 }}
                             >
-                                <MenuItem value={1}>
+                                <MenuItem value={0}>
                                     Tallinn Lennart Meri Airport (TLL)
                                 </MenuItem>
-                                <MenuItem value={2}>
+                                <MenuItem value={1}>
                                     Riga International Airport (RIX)
                                 </MenuItem>
-                                <MenuItem value={3}>
+                                <MenuItem value={2}>
                                     Helsinki Airport (HEL)
                                 </MenuItem>
                             </Field>
@@ -109,11 +103,22 @@ const ShipmentForm: React.FC = () => {
                         </div>
                         <div>
                             <div>Flight date</div>
-                            <Field
-                                name="flightDate"
-                                type="date"
-                                as={DatePicker}
-                            />
+                            <MuiPickersUtilsProvider utils={DateFnsUtils}>
+                                <KeyboardDatePicker
+                                    disableToolbar
+                                    variant="inline"
+                                    format="dd/MM/yyyy"
+                                    id="date-picker-inline"
+                                    value={values.flightDate}
+                                    style={{ width: 286 }}
+                                    onChange={(flightDate) => {
+                                        setFieldValue("flightDate", flightDate);
+                                    }}
+                                    KeyboardButtonProps={{
+                                        "aria-label": "change date",
+                                    }}
+                                />
+                            </MuiPickersUtilsProvider>
                         </div>
                         <div>
                             <Button

@@ -30,20 +30,26 @@ namespace DAL.Migrations
                         .HasColumnType("nvarchar(15)")
                         .HasMaxLength(15);
 
-                    b.Property<string>("Discriminator")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("LetterCount")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Price")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<Guid>("ShipmentId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Weight")
+                        .HasColumnType("decimal(18,3)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("ShipmentId");
 
-                    b.ToTable("Bag");
-
-                    b.HasDiscriminator<string>("Discriminator").HasValue("Bag");
+                    b.ToTable("Bags");
                 });
 
             modelBuilder.Entity("Domain.Parcel", b =>
@@ -58,9 +64,6 @@ namespace DAL.Migrations
                     b.Property<string>("DestinationCountry")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid?>("ParcelBagId")
-                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("ParcelNumber")
                         .IsRequired()
@@ -80,8 +83,6 @@ namespace DAL.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("BagId");
-
-                    b.HasIndex("ParcelBagId");
 
                     b.ToTable("Parcels");
                 });
@@ -114,29 +115,6 @@ namespace DAL.Migrations
                     b.ToTable("Shipments");
                 });
 
-            modelBuilder.Entity("Domain.LetterBag", b =>
-                {
-                    b.HasBaseType("Domain.Bag");
-
-                    b.Property<int>("LetterCount")
-                        .HasColumnType("int");
-
-                    b.Property<decimal>("Price")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal>("Weight")
-                        .HasColumnType("decimal(18,3)");
-
-                    b.HasDiscriminator().HasValue("LetterBag");
-                });
-
-            modelBuilder.Entity("Domain.ParcelBag", b =>
-                {
-                    b.HasBaseType("Domain.Bag");
-
-                    b.HasDiscriminator().HasValue("ParcelBag");
-                });
-
             modelBuilder.Entity("Domain.Bag", b =>
                 {
                     b.HasOne("Domain.Shipment", "Shipment")
@@ -149,14 +127,10 @@ namespace DAL.Migrations
             modelBuilder.Entity("Domain.Parcel", b =>
                 {
                     b.HasOne("Domain.Bag", "Bag")
-                        .WithMany()
+                        .WithMany("Parcels")
                         .HasForeignKey("BagId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("Domain.ParcelBag", null)
-                        .WithMany("Parcels")
-                        .HasForeignKey("ParcelBagId");
                 });
 #pragma warning restore 612, 618
         }

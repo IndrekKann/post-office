@@ -1,7 +1,12 @@
-﻿namespace DAL.Repositories
+﻿using Domain;
+
+namespace DAL.Repositories
 {
-    public class ParcelRepository
+    public class ParcelRepository : EfCoreRepository<Parcel, AppDbContext>
     {
+        public ParcelRepository(AppDbContext repoDbContext) : base(repoDbContext)
+        {
+        }
         
     }
 }

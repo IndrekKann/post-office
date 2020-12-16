@@ -1,8 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
-import IShipment from "../interfaces/IShipment";
-import LoadingSpinner from "./LoadingSpinner";
-import { Link } from "react-router-dom";
+import { RouteComponentProps } from "react-router";
 import { makeStyles } from "@material-ui/core/styles";
 import Paper from "@material-ui/core/Paper";
 import Table from "@material-ui/core/Table";
@@ -12,9 +9,13 @@ import TableContainer from "@material-ui/core/TableContainer";
 import TableHead from "@material-ui/core/TableHead";
 import TablePagination from "@material-ui/core/TablePagination";
 import TableRow from "@material-ui/core/TableRow";
+import LoadingSpinner from "../components/LoadingSpinner";
+import BagAPI from "../api/BagAPI";
+import IBag from "../interfaces/IBag";
+import { Type } from "../interfaces/Type";
 
 interface Column {
-    id: "shipmentNumber" | "airport" | "flightNumber" | "flightDate";
+    id: "bagNumber" | "type" | "letterCount" | "price" | "weight";
     label: string;
     minWidth?: number;
     align?: "right";
@@ -22,18 +23,12 @@ interface Column {
 }
 
 const columns: Column[] = [
-    { id: "shipmentNumber", label: "Shipment number", minWidth: 150 },
-    { id: "airport", label: "Airport", minWidth: 100 },
-    { id: "flightNumber", label: "Flight number", minWidth: 150 },
-    { id: "flightDate", label: "Flight date", minWidth: 150 },
+    { id: "bagNumber", label: "Bag number", minWidth: 112.5 },
+    { id: "type", label: "Bag type", minWidth: 100 },
+    { id: "letterCount", label: "Amount of contents", minWidth: 112.5 },
+    { id: "price", label: "Price", minWidth: 112.5 },
+    { id: "weight", label: "Weight", minWidth: 112.5 },
 ];
-
-interface Data {
-    shipmentNumber: string;
-    airport: string;
-    flightNumber: string;
-    flightDate: Date;
-}
 
 const useStyles = makeStyles({
     root: {
@@ -47,10 +42,12 @@ const useStyles = makeStyles({
     },
 });
 
-const Shipments: React.FC = () => {
-    const initialValues: IShipment[] = [];
+interface Props extends RouteComponentProps<{ id: string }> {}
+
+const BagsList: React.FC<Props> = ({ match }) => {
+    const initialValues: IBag[] = [];
     const [loading, setLoading] = useState(true);
-    const [shipments, setShipments] = useState(initialValues);
+    const [bags, setBags] = useState(initialValues);
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const classes = useStyles();
@@ -67,12 +64,10 @@ const Shipments: React.FC = () => {
     };
 
     useEffect(() => {
-        axios
-            .get<IShipment[]>("http://localhost:5000/api/shipments")
-            .then((response) => {
-                setShipments(response.data);
-                setLoading(false);
-            });
+        BagAPI.getAllForShipment(match.params.id).then((bags) => {
+            setBags(bags);
+            setLoading(false);
+        });
     }, []);
 
     if (loading) {
@@ -97,23 +92,24 @@ const Shipments: React.FC = () => {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {shipments
+                        {bags
                             .slice(
                                 page * rowsPerPage,
                                 page * rowsPerPage + rowsPerPage
                             )
-                            .map((shipments) => {
+                            .map((bags) => {
                                 return (
                                     <TableRow
                                         hover
                                         role="checkbox"
                                         tabIndex={-1}
-                                        key={shipments.id}
+                                        key={bags.id}
                                     >
                                         {columns.map((column) => {
-                                            const value = shipments[column.id];
+                                            const value = bags[column.id];
                                             if (
-                                                column.id === "shipmentNumber"
+                                                column.id === "type" &&
+                                                typeof value === "number"
                                             ) {
                                                 return (
                                                     <TableCell
@@ -122,17 +118,7 @@ const Shipments: React.FC = () => {
                                                         key={column.id}
                                                         align={column.align}
                                                     >
-                                                        {column.format &&
-                                                        typeof value ===
-                                                            "number" ? (
-                                                            column.format(value)
-                                                        ) : (
-                                                            <Link
-                                                                to={`/shipments/${shipments.id}`}
-                                                            >
-                                                                {value}
-                                                            </Link>
-                                                        )}
+                                                        {Type[value]}
                                                     </TableCell>
                                                 );
                                             } else {
@@ -163,7 +149,7 @@ const Shipments: React.FC = () => {
             <TablePagination
                 rowsPerPageOptions={[10, 25, 100]}
                 component="div"
-                count={shipments.length}
+                count={bags.length}
                 rowsPerPage={rowsPerPage}
                 page={page}
                 onChangePage={handleChangePage}
@@ -173,4 +159,4 @@ const Shipments: React.FC = () => {
     );
 };
 
-export default Shipments;
+export default BagsList;

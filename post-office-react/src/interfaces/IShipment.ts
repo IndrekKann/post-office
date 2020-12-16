@@ -1,9 +1,12 @@
+import IBag from "./IBag";
+import { Airport } from "./Airport";
+
 export default interface IShipment {
-    id: string;
+    id?: string;
     shipmentNumber: string;
-    airport: number;
+    airport: Airport;
     flightNumber: string;
     flightDate: Date;
-    bags: [];
+    bags: IBag[];
     isFinalized: boolean;
 }

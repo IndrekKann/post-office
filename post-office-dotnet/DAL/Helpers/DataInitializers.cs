@@ -1,7 +1,4 @@
-﻿using System;
-using Domain;
-using Microsoft.EntityFrameworkCore;
-using System.Linq;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace DAL.Helpers
 {
@@ -19,8 +16,6 @@ namespace DAL.Helpers
 
         public static void SeedData(AppDbContext context)
         {
-
-
             context.SaveChanges();
         }
         

@@ -30,9 +30,10 @@ namespace WebApp
                     Configuration.GetConnectionString("MsSqlConnection")));
 
             services.AddScoped<ShipmentRepository>();
-            // services.AddScoped<BagRepository>();
+            services.AddScoped<BagRepository>();
+            services.AddScoped<ParcelRepository>();
             services.AddScoped<ShipmentService>();
-            // services.AddScoped<BagService>();
+            services.AddScoped<BagService>();
 
             services.AddControllersWithViews();
             services.AddRazorPages();

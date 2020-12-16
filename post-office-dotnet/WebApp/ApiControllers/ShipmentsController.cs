@@ -41,15 +41,17 @@ namespace WebApp.ApiControllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutShipment(Guid id, Shipment shipment)
+        public async Task<IActionResult> PutShipment(Guid id)
         {
-            return NoContent();
+            var shipmentId = await _service.FinalizeShipment(id);
+
+            return Ok(shipmentId);
         }
         
         [HttpPost]
         public async Task<ActionResult<Shipment>> PostShipment(Shipment shipment)
         {
-            var shipmentId = await _service.RegisterShipment(shipment);
+            var shipmentId = await _service.CreateShipment(shipment);
 
             if (shipmentId == null)
             {

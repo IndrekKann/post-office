@@ -15,3 +15,25 @@
 .shipment-form div + div {
     margin-bottom: 1em;
 }
+
+.forms {
+    margin: 0 0 0 4em;
+    display: table;
+}
+
+.form {
+    margin: 2em;
+    display: table;
+}
+
+.add-remove-button {
+    margin: 2em auto;
+    text-align: center;
+    display: table;
+}
+
+.remove-button {
+    margin: 0 auto;
+    text-align: center;
+    display: table;
+}

@@ -9,7 +9,13 @@ const BagParcelRadioButton: React.FC<BagParcelRadioButtonProps> = ({
     ...props
 }) => {
     const [field] = useField<{}>(props);
-    return <FormControlLabel {...field} control={<Radio />} label={label} />;
+    return (
+        <FormControlLabel
+            {...field}
+            control={<Radio color="primary" />}
+            label={label}
+        />
+    );
 };
 
 export default BagParcelRadioButton;

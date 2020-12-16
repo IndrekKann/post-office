@@ -24,22 +24,22 @@ namespace DAL.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Bag",
+                name: "Bags",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(nullable: false),
                     ShipmentId = table.Column<Guid>(nullable: false),
                     BagNumber = table.Column<string>(maxLength: 15, nullable: false),
-                    Discriminator = table.Column<string>(nullable: false),
-                    LetterCount = table.Column<int>(nullable: true),
-                    Weight = table.Column<decimal>(type: "decimal(18,3)", nullable: true),
-                    Price = table.Column<decimal>(type: "decimal(18,2)", nullable: true)
+                    LetterCount = table.Column<int>(nullable: false),
+                    Weight = table.Column<decimal>(type: "decimal(18,3)", nullable: false),
+                    Price = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    Type = table.Column<int>(nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Bag", x => x.Id);
+                    table.PrimaryKey("PK_Bags", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Bag_Shipments_ShipmentId",
+                        name: "FK_Bags_Shipments_ShipmentId",
                         column: x => x.ShipmentId,
                         principalTable: "Shipments",
                         principalColumn: "Id",
@@ -56,40 +56,28 @@ namespace DAL.Migrations
                     RecipientName = table.Column<string>(maxLength: 100, nullable: false),
                     DestinationCountry = table.Column<string>(nullable: false),
                     Weight = table.Column<decimal>(type: "decimal(18,3)", nullable: false),
-                    Price = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    ParcelBagId = table.Column<Guid>(nullable: true)
+                    Price = table.Column<decimal>(type: "decimal(18,2)", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Parcels", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Parcels_Bag_BagId",
+                        name: "FK_Parcels_Bags_BagId",
                         column: x => x.BagId,
-                        principalTable: "Bag",
+                        principalTable: "Bags",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_Parcels_Bag_ParcelBagId",
-                        column: x => x.ParcelBagId,
-                        principalTable: "Bag",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Bag_ShipmentId",
-                table: "Bag",
+                name: "IX_Bags_ShipmentId",
+                table: "Bags",
                 column: "ShipmentId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Parcels_BagId",
                 table: "Parcels",
                 column: "BagId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Parcels_ParcelBagId",
-                table: "Parcels",
-                column: "ParcelBagId");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
@@ -98,7 +86,7 @@ namespace DAL.Migrations
                 name: "Parcels");
 
             migrationBuilder.DropTable(
-                name: "Bag");
+                name: "Bags");
 
             migrationBuilder.DropTable(
                 name: "Shipments");
