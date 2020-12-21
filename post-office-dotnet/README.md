@@ -9,9 +9,6 @@
 ~~~
 dotnet tool install --global dotnet-ef 
 dotnet tool update --global dotnet-ef 
- 
-dotnet tool install -g dotnet-aspnet-codegenerator 
-dotnet tool update -g dotnet-aspnet-codegenerator 
 ~~~
 
 ## Generate database migration
