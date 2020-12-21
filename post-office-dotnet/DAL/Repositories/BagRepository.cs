@@ -16,8 +16,8 @@ namespace DAL.Repositories
 
         public async Task<IEnumerable<Bag>> GetAllBagsForShipment(Guid shipmentId)
         {
-            return await PrepareQuery().Where(b => b.ShipmentId.Equals(shipmentId)).ToListAsync();
+            return await PrepareQuery().Where(bag => bag.ShipmentId.Equals(shipmentId)).ToListAsync();
         }
-
+        
     }
 }

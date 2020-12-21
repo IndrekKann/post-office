@@ -16,6 +16,7 @@ import { Airport } from "../interfaces/Airport";
 
 const ShipmentForm: React.FC = () => {
     const [shipmentId, setShipmentId] = useState("");
+    const [shipmentNumbers, setShipmentNumbers] = useState([] as string[]);
 
     const validationSchema = yup.object().shape({
         shipmentNumber: yup
@@ -24,7 +25,21 @@ const ShipmentForm: React.FC = () => {
                 /^[a-zA-Z0-9]{3}-[a-zA-Z0-9]{6}$/,
                 "Shipment number does not match the required format."
             )
-            .required("Shipment number is required."),
+            .required("Shipment number is required.")
+            .test(
+                "uniqueShipmentNumber",
+                "Shipment number must be unique.",
+                (value) => {
+                    ShipmentAPI.getAll().then((shipments) => {
+                        const shipmentNumbers: string[] = [];
+                        shipments.forEach((shipment) => {
+                            shipmentNumbers.push(shipment.shipmentNumber);
+                        });
+                        setShipmentNumbers(shipmentNumbers);
+                    });
+                    return !shipmentNumbers.includes(value!);
+                }
+            ),
         flightNumber: yup
             .string()
             .matches(

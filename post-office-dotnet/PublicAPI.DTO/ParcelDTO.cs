@@ -4,6 +4,7 @@ namespace PublicAPI.DTO
 {
     public class ParcelDTO
     {
+        public Guid Id { get; set; }
         public Guid BagId { get; set; }
         public string ParcelNumber { get; set; } = default!;
         public string RecipientName { get; set; } = default!;

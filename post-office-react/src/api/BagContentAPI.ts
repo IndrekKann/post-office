@@ -1,5 +1,6 @@
 import axios from "axios";
 import ICreateContentForBags from "../interfaces/ICreateContentForBags";
+import IParcel from "../interfaces/IParcel";
 
 export default abstract class BagContentAPI {
     private static axios = axios.create({
@@ -24,6 +25,32 @@ export default abstract class BagContentAPI {
             return "";
         } catch (error) {
             return "";
+        }
+    }
+
+    static async getAllForShipment(id: string): Promise<IParcel[]> {
+        const url = `/${id}`;
+        try {
+            const response = await this.axios.get<IParcel[]>(url);
+            if (response.status === 200) {
+                return response.data;
+            }
+            return [];
+        } catch (error) {
+            return [];
+        }
+    }
+
+    static async getAllParcelNumbers(): Promise<string[]> {
+        const url = "";
+        try {
+            const response = await this.axios.get<string[]>(url);
+            if (response.status === 200) {
+                return response.data;
+            }
+            return [];
+        } catch (error) {
+            return [];
         }
     }
 }

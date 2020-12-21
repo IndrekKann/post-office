@@ -1,8 +1,6 @@
 import axios from "axios";
 import IBag from "../interfaces/IBag";
-import IBagCreate from "../interfaces/IBagCreate";
 import IBagCreation from "../interfaces/IBagCreation";
-import { Type } from "../interfaces/Type";
 import ICreateBagsForShipment from "../interfaces/ICreateBagsForShipment";
 
 export default abstract class BagAPI {
@@ -64,16 +62,29 @@ export default abstract class BagAPI {
         }
     }
 
-    static async post(bags: IBagCreate): Promise<string> {
+    static async getAllBagNumbers(): Promise<string[]> {
         const url = "";
         try {
-            const response = await this.axios.post<string>(url, bags);
-            if (response.status === 201) {
+            const response = await this.axios.get<string[]>(url);
+            if (response.status === 200) {
                 return response.data;
             }
-            return "";
+            return [];
         } catch (error) {
-            return "";
+            return [];
+        }
+    }
+
+    static async getBagById(id: string): Promise<IBag> {
+        const url = `/bag/${id}`;
+        try {
+            const response = await this.axios.get<IBag>(url);
+            if (response.status === 200) {
+                return response.data;
+            }
+            return response.data;
+        } catch (error) {
+            return error.data;
         }
     }
 

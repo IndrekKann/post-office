@@ -20,13 +20,13 @@ namespace WebApp.ApiControllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Shipment>>> GetBags()
+        public async Task<ActionResult<IEnumerable<string>>> GetBagNumbers()
         {
-            return Ok(await _service.GetAllBags());
+            return Ok(await _service.GetAllBagNumbers());
         }
         
         [HttpGet("{shipmentId}")]
-        public async Task<ActionResult<IEnumerable<Shipment>>> GetBags(Guid shipmentId)
+        public async Task<ActionResult<IEnumerable<Bag>>> GetBags(Guid shipmentId)
         {
             return Ok(await _service.GetAllBagsForShipment(shipmentId));
         }
@@ -34,24 +34,10 @@ namespace WebApp.ApiControllers
         [HttpPost]
         public async Task<ActionResult<Guid>> PostBags(BagCreateDTO bagCreateDTO)
         {
-            var shipment = await _service.GetShipmentById(bagCreateDTO.ShipmentId);
             var shipmentId = await _service.CreateBags(bagCreateDTO);
-            
-            if (shipmentId == null)
-            {
-                ModelState.AddModelError("bags", "Bag number must be unique.");
-                return BadRequest(ModelState);
-            }
-
-            if (shipment.IsFinalized)
-            {
-                ModelState.AddModelError("isFinalized", "Cannot edit contents of finalized shipment.");
-                return BadRequest(ModelState);
-            }
 
             return Created("bags", shipmentId);
         }
-        
         
     }
 }

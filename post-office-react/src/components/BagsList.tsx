@@ -68,7 +68,7 @@ const BagsList: React.FC<Props> = ({ match }) => {
             setBags(bags);
             setLoading(false);
         });
-    }, []);
+    }, [match.params.id]);
 
     if (loading) {
         return <LoadingSpinner />;

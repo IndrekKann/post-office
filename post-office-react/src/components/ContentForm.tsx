@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Redirect } from "react-router-dom";
 import { Formik, Form, FieldArray } from "formik";
+import { v4 as uuidv4 } from "uuid";
 import { Button } from "@material-ui/core";
 import { makeStyles, createStyles, Theme } from "@material-ui/core/styles";
 import * as yup from "yup";
@@ -27,75 +28,91 @@ const useStyles = makeStyles((theme: Theme) =>
     })
 );
 
-const validationSchema = yup.object().shape({
-    bags: yup.array().of(
-        yup.object().shape({
-            letterCount: yup
-                .string()
-                .matches(/^\d+$/, "Count of letters must be an integer.")
-                .required("Count of letters is required."),
-            weight: yup
-                .string()
-                .matches(
-                    /^\d+[.,]?\d{0,3}$/,
-                    "Max 3 decimals allowed after comma."
-                )
-                .required("Weight is required."),
-            price: yup
-                .string()
-                .matches(
-                    /^\d+[.,]?\d{0,2}$/,
-                    "Max 2 decimals allowed after comma."
-                )
-                .required("Price is required."),
-        })
-    ),
-    parcels: yup.array().of(
-        yup.object().shape({
-            parcelNumber: yup
-                .string()
-                .matches(
-                    /^\w{2}\d{6}\w{2}$/,
-                    "Parcel number does not match the required format."
-                )
-                .required("Parcel number is required."),
-            recipientName: yup.string().required("Recipient name is required."),
-            destinationCountry: yup
-                .string()
-                .matches(
-                    /^\w{2}$/,
-                    "Destination country code must be 2 letters."
-                )
-                .required("Destination country is required."),
-            weight: yup
-                .string()
-                .matches(
-                    /^\d+[.,]?\d{0,3}$/,
-                    "Max 3 decimals allowed after comma."
-                )
-                .required("Weight is required."),
-            price: yup
-                .string()
-                .matches(
-                    /^\d+[.,]?\d{0,2}$/,
-                    "Max 2 decimals allowed after comma."
-                )
-                .required("Price is required."),
-        })
-    ),
-});
-
 type Props = {
     shipmentId: string;
     shipmentNumber: string;
     isFinalized: boolean;
     bags: IBag[];
+    parcels: IParcel[];
 };
 
 const ContentForm: React.FC<Props> = (props) => {
     const [shipmentId, setShipmentId] = useState("");
+    const [parcelNumbers, setParcelNumbers] = useState([] as string[]);
     const classes = useStyles();
-    const parcels: IParcel[] = [];
+
+    const validationSchema = yup.object().shape({
+        bags: yup.array().of(
+            yup.object().shape({
+                letterCount: yup
+                    .string()
+                    .matches(/^\d+$/, "Count of letters must be an integer.")
+                    .required("Count of letters is required."),
+                weight: yup
+                    .string()
+                    .matches(
+                        /^\d+[.,]?\d{0,3}$/,
+                        "Max 3 decimals allowed after comma."
+                    )
+                    .required("Weight is required."),
+                price: yup
+                    .string()
+                    .matches(
+                        /^\d+[.,]?\d{0,2}$/,
+                        "Max 2 decimals allowed after comma."
+                    )
+                    .required("Price is required."),
+            })
+        ),
+        parcels: yup.array().of(
+            yup.object().shape({
+                id: yup.string(),
+                parcelNumber: yup
+                    .string()
+                    .matches(
+                        /^\w{2}\d{6}\w{2}$/,
+                        "Parcel number does not match the required format."
+                    )
+                    .required("Parcel number is required.")
+                    .test(
+                        "uniqueParcelNumber",
+                        "Parcel number must be unique.",
+                        (value) => {
+                            BagContentAPI.getAllParcelNumbers().then(
+                                (parcelNumber) => {
+                                    setParcelNumbers(parcelNumber);
+                                }
+                            );
+                            return !parcelNumbers.includes(value!);
+                        }
+                    ),
+                recipientName: yup
+                    .string()
+                    .required("Recipient name is required."),
+                destinationCountry: yup
+                    .string()
+                    .matches(
+                        /^\w{2}$/,
+                        "Destination country code must be 2 letters."
+                    )
+                    .required("Destination country is required."),
+                weight: yup
+                    .string()
+                    .matches(
+                        /^\d+[.,]?\d{0,3}$/,
+                        "Max 3 decimals allowed after comma."
+                    )
+                    .required("Weight is required."),
+                price: yup
+                    .string()
+                    .matches(
+                        /^\d+[.,]?\d{0,2}$/,
+                        "Max 2 decimals allowed after comma."
+                    )
+                    .required("Price is required."),
+            })
+        ),
+    });
 
     if (props.isFinalized) {
         return (
@@ -117,27 +134,17 @@ const ContentForm: React.FC<Props> = (props) => {
                 initialValues={{
                     shipmentId: props.shipmentId,
                     bags: props.bags,
-                    parcels: parcels,
+                    parcels: props.parcels,
                 }}
                 validationSchema={validationSchema}
                 onSubmit={(data, { setSubmitting }) => {
                     setSubmitting(true);
-                    console.log(
-                        JSON.stringify(
-                            {
-                                shipmentId: data.shipmentId,
-                                bags: data.bags,
-                            },
-                            null,
-                            2
-                        )
-                    );
                     BagContentAPI.createContentForBags({
                         shipmentId: data.shipmentId,
                         bags: data.bags,
+                        parcels: data.parcels,
                     }).then((id) => {
                         setShipmentId(id);
-                        console.log(id);
                     });
                     setSubmitting(false);
                 }}
@@ -199,6 +206,7 @@ const ContentForm: React.FC<Props> = (props) => {
                                                                     onClick={() =>
                                                                         arrayHelpers.push(
                                                                             {
+                                                                                id: uuidv4(),
                                                                                 bagId:
                                                                                     bag.id,
                                                                                 parcelNumber:
@@ -209,9 +217,6 @@ const ContentForm: React.FC<Props> = (props) => {
                                                                                     "",
                                                                                 weight: 0,
                                                                                 price: 0,
-                                                                                id:
-                                                                                    "" +
-                                                                                    Math.random(),
                                                                             }
                                                                         )
                                                                     }
@@ -226,76 +231,83 @@ const ContentForm: React.FC<Props> = (props) => {
                                                                         parcel,
                                                                         index
                                                                     ) => {
-                                                                        return (
-                                                                            <div
-                                                                                key={
-                                                                                    parcel.id
-                                                                                }
-                                                                            >
-                                                                                <div>
+                                                                        if (
+                                                                            parcel.bagId ===
+                                                                            bag.id!
+                                                                        ) {
+                                                                            return (
+                                                                                <div
+                                                                                    key={
+                                                                                        parcel.id
+                                                                                    }
+                                                                                >
                                                                                     <div>
-                                                                                        Parcel
-                                                                                        number
+                                                                                        <div>
+                                                                                            Parcel
+                                                                                            number
+                                                                                        </div>
+                                                                                        <FormTextField
+                                                                                            placeholder="e.g. AA123456AA"
+                                                                                            name={`parcels.${index}.parcelNumber`}
+                                                                                        />
                                                                                     </div>
-                                                                                    <FormTextField
-                                                                                        placeholder="e.g. AA123456AA"
-                                                                                        name={`parcels.${index}.parcelNumber`}
-                                                                                    />
-                                                                                </div>
-                                                                                <div>
                                                                                     <div>
-                                                                                        Recipient
-                                                                                        name
+                                                                                        <div>
+                                                                                            Recipient
+                                                                                            name
+                                                                                        </div>
+                                                                                        <FormTextField
+                                                                                            placeholder="e.g. John Smith"
+                                                                                            name={`parcels.${index}.recipientName`}
+                                                                                        />
                                                                                     </div>
-                                                                                    <FormTextField
-                                                                                        placeholder="e.g. John Smith"
-                                                                                        name={`parcels.${index}.recipientName`}
-                                                                                    />
-                                                                                </div>
-                                                                                <div>
                                                                                     <div>
-                                                                                        Destination
-                                                                                        country
-                                                                                        (2
-                                                                                        letter
-                                                                                        code)
+                                                                                        <div>
+                                                                                            Destination
+                                                                                            country
+                                                                                            (2
+                                                                                            letter
+                                                                                            code)
+                                                                                        </div>
+                                                                                        <FormTextField
+                                                                                            placeholder="e.g. EE"
+                                                                                            name={`parcels.${index}.destinationCountry`}
+                                                                                        />
                                                                                     </div>
-                                                                                    <FormTextField
-                                                                                        placeholder="e.g. EE"
-                                                                                        name={`parcels.${index}.destinationCountry`}
-                                                                                    />
-                                                                                </div>
-                                                                                <div>
                                                                                     <div>
-                                                                                        Weight
+                                                                                        <div>
+                                                                                            Weight
+                                                                                        </div>
+                                                                                        <FormNumberField
+                                                                                            name={`parcels.${index}.weight`}
+                                                                                        />
                                                                                     </div>
-                                                                                    <FormNumberField
-                                                                                        name={`parcels.${index}.weight`}
-                                                                                    />
-                                                                                </div>
-                                                                                <div>
                                                                                     <div>
-                                                                                        Price
+                                                                                        <div>
+                                                                                            Price
+                                                                                        </div>
+                                                                                        <FormNumberField
+                                                                                            name={`parcels.${index}.price`}
+                                                                                        />
                                                                                     </div>
-                                                                                    <FormNumberField
-                                                                                        name={`parcels.${index}.price`}
-                                                                                    />
+                                                                                    <div>
+                                                                                        <Button
+                                                                                            variant="contained"
+                                                                                            color="secondary"
+                                                                                            onClick={() =>
+                                                                                                arrayHelpers.remove(
+                                                                                                    index
+                                                                                                )
+                                                                                            }
+                                                                                        >
+                                                                                            Remove
+                                                                                        </Button>
+                                                                                    </div>
                                                                                 </div>
-                                                                                <div>
-                                                                                    <Button
-                                                                                        variant="contained"
-                                                                                        color="secondary"
-                                                                                        onClick={() =>
-                                                                                            arrayHelpers.remove(
-                                                                                                index
-                                                                                            )
-                                                                                        }
-                                                                                    >
-                                                                                        Remove
-                                                                                    </Button>
-                                                                                </div>
-                                                                            </div>
-                                                                        );
+                                                                            );
+                                                                        } else {
+                                                                            return null;
+                                                                        }
                                                                     }
                                                                 )}
                                                             </div>
@@ -304,6 +316,8 @@ const ContentForm: React.FC<Props> = (props) => {
                                                 </FieldArray>
                                             </div>
                                         );
+                                    } else {
+                                        return <></>;
                                     }
                                 })}
                             </div>
@@ -319,7 +333,6 @@ const ContentForm: React.FC<Props> = (props) => {
                                 </Button>
                             </div>
                         </div>
-                        <pre>{JSON.stringify(values, null, 2)}</pre>
                     </Form>
                 )}
             </Formik>

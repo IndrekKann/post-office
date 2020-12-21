@@ -23,7 +23,7 @@ const AddBagsToShipment: React.FC<Props> = ({ match }) => {
             setShipment(shipment);
         });
         setLoading(false);
-    }, []);
+    }, [match.params.id]);
 
     if (loading) {
         return <LoadingSpinner />;

@@ -27,22 +27,6 @@ const useStyles = makeStyles((theme: Theme) =>
     })
 );
 
-const validationSchema = yup.object().shape({
-    bags: yup.array().of(
-        yup.object().shape({
-            bagNumber: yup
-                .string()
-                .required("Bag number is required.")
-                .max(15, "Bag number is too long.")
-                .matches(
-                    /^[a-zA-Z0-9]{1,15}$/,
-                    "Bag number does not match the required format."
-                ),
-            type: yup.string().required("Bag type must be chosen."),
-        })
-    ),
-});
-
 // Convertion because radio button value cannot be nonstring
 const convertBagTypeToString = (bags: IBagCreation[]): IBagView[] => {
     const mappedBags: IBagView[] = [];
@@ -79,7 +63,35 @@ type Props = {
 
 const BagForm: React.FC<Props> = (props) => {
     const [shipmentId, setShipmentId] = useState("");
+    const [bagNumbers, setBagNumbers] = useState([] as string[]);
     const classes = useStyles();
+
+    const validationSchema = yup.object().shape({
+        bags: yup.array().of(
+            yup.object().shape({
+                id: yup.string(),
+                bagNumber: yup
+                    .string()
+                    .required("Bag number is required.")
+                    .max(15, "Bag number is too long.")
+                    .matches(
+                        /^[a-zA-Z0-9]{1,15}$/,
+                        "Bag number does not match the required format."
+                    )
+                    .test(
+                        "uniqueBagNumber",
+                        "Bag number must be unique.",
+                        (value) => {
+                            BagAPI.getAllBagNumbers().then((bagNumbers) => {
+                                setBagNumbers(bagNumbers);
+                            });
+                            return !bagNumbers.includes(value!);
+                        }
+                    ),
+                type: yup.string().required("Bag type must be chosen."),
+            })
+        ),
+    });
 
     if (props.isFinalized) {
         return (
@@ -194,7 +206,6 @@ const BagForm: React.FC<Props> = (props) => {
                                 </div>
                             )}
                         </FieldArray>
-                        <pre>{JSON.stringify(values, null, 2)}</pre>
                     </Form>
                 )}
             </Formik>

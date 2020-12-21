@@ -136,7 +136,7 @@ const Shipments: React.FC = () => {
                                                     </TableCell>
                                                 );
                                             } else if (
-                                                column.id == "flightDate" &&
+                                                column.id === "flightDate" &&
                                                 typeof value === "string"
                                             ) {
                                                 return (

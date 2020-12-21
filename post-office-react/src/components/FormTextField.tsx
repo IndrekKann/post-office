@@ -3,6 +3,7 @@ import { useField, FieldAttributes } from "formik";
 import { TextField } from "@material-ui/core";
 
 const FormTextField: React.FC<FieldAttributes<{}>> = ({
+    disabled,
     placeholder,
     ...props
 }) => {
@@ -10,6 +11,7 @@ const FormTextField: React.FC<FieldAttributes<{}>> = ({
     const errorText = meta.error && meta.touched ? meta.error : "";
     return (
         <TextField
+            disabled={disabled}
             autoComplete="off"
             placeholder={placeholder}
             {...field}

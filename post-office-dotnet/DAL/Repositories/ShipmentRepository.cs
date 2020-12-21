@@ -14,16 +14,9 @@ namespace DAL.Repositories
         {
         }
 
-        public async Task<IEnumerable<Shipment>> GetAllShipments(int limit = 18)
+        public async Task<IEnumerable<Shipment>> GetAllShipments()
         {
-            return await PrepareQuery().Take(limit).ToListAsync();
-        }
-
-        public async Task<Shipment> GetShipmentBySearch(string search)
-        {
-            return String.IsNullOrWhiteSpace(search) ? await PrepareQuery()
-                .Where(shipment => shipment.ShipmentNumber.ToLower().Equals(search.ToLower()))
-                .FirstOrDefaultAsync() : null; // return not found
+            return await PrepareQuery().ToListAsync();
         }
 
         public async Task<Shipment> GetShipmentById(Guid id)

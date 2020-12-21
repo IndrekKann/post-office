@@ -35,22 +35,40 @@ namespace BLL.Services
         {
             return await _bagRepository.GetAllBagsForShipment(shipmentId);
         }
-        
-        // For testing 
-        public async Task<IEnumerable<Bag>> GetAllBags()
+
+        public async Task<Bag> GetBagById(Guid bagId)
         {
-            return await _bagRepository.GetAll();
+            return await _bagRepository.Get(bagId);
         }
 
-        public async Task<Guid?> CreateShipment(Shipment shipment)
+        public async Task<IEnumerable<Parcel>> GetAllParcelsForShipment(Guid shipmentId)
         {
-            if (IsShipmentNumberUnique(shipment.ShipmentNumber))
+            var parcels = new List<Parcel>();
+            var bags = await _bagRepository.GetAllBagsForShipment(shipmentId);
+            foreach (var bag in bags)
             {
-                var addedShipment = await _shipmentRepository.Add(shipment);
-                return addedShipment.Id;
+                parcels.AddRange(await _parcelRepository.GetAllParcelsForBag(bag.Id));
             }
-            
-            return null;
+
+            return parcels;
+        }
+
+        public async Task<IEnumerable<string>> GetAllBagNumbers()
+        {
+            var bags = await _bagRepository.GetAll();
+            return bags.Select(bag => bag.BagNumber).ToList();
+        }
+        
+        public async Task<IEnumerable<string>> GetAllParcelNumbers()
+        {
+            var parcels = await _parcelRepository.GetAll();
+            return parcels.Select(parcel => parcel.ParcelNumber).ToList();
+        }
+
+        public async Task<Guid> CreateShipment(Shipment shipment)
+        {
+            var addedShipment = await _shipmentRepository.Add(shipment);
+            return addedShipment.Id;
         }
 
         public async Task<Guid> CreateBags(BagCreateDTO bagCreateDTO)
@@ -116,20 +134,54 @@ namespace BLL.Services
                 if ((Bag.BagType) bag.Type == Bag.BagType.Parcel)
                 {
                     var parcels = new List<Parcel>();
+                    var oldParcelIds = _parcelRepository.GetAllParcelsForBag(bag.Id).Result.Select(oldParcel => oldParcel.Id).ToList();
                     
-                    foreach (var parcel in bag.Parcels!)
+                    foreach (var parcel in bagCreateDTO.Parcels!)
                     {
-                        var domainParcel = new Parcel
+                        if (oldParcelIds.Contains(parcel.Id))
                         {
-                            BagId = parcel.BagId,
-                            ParcelNumber = parcel.ParcelNumber,
-                            RecipientName = parcel.RecipientName,
-                            DestinationCountry = parcel.DestinationCountry,
-                            Price = parcel.Price,
-                            Weight = parcel.Weight
-                        };
-                        parcels.Add(domainParcel);
-                        await _parcelRepository.Add(domainParcel);
+                            var domainParcel = new Parcel
+                            {
+                                Id = parcel.Id,
+                                BagId = parcel.BagId,
+                                ParcelNumber = parcel.ParcelNumber,
+                                RecipientName = parcel.RecipientName,
+                                DestinationCountry = parcel.DestinationCountry,
+                                Weight = parcel.Weight,
+                                Price = parcel.Price
+                            };
+                            await _parcelRepository.Update(domainParcel);
+                        }
+                        else
+                        {
+                            var domainParcel = new Parcel
+                            {
+                                BagId = parcel.BagId,
+                                ParcelNumber = parcel.ParcelNumber,
+                                RecipientName = parcel.RecipientName,
+                                DestinationCountry = parcel.DestinationCountry,
+                                Weight = parcel.Weight,
+                                Price = parcel.Price
+                            };
+                            parcels.Add(domainParcel);
+                            await _parcelRepository.Add(domainParcel);
+                        }
+                    }
+
+                    foreach (var id in oldParcelIds)
+                    {
+                        var isDeleted = true;
+                        foreach (var parcel in bagCreateDTO.Parcels)
+                        {
+                            if (parcel.Id.Equals(id))
+                            {
+                                isDeleted = false;
+                            }
+                        }
+                        if (isDeleted)
+                        {
+                            await _parcelRepository.Delete(id);
+                        }
                     }
 
                     var parcelBag = new Bag
@@ -138,11 +190,11 @@ namespace BLL.Services
                         ShipmentId = bagCreateDTO.ShipmentId, 
                         BagNumber = bag.BagNumber,
                         Type = Bag.BagType.Parcel,
-                        LetterCount = bag.Parcels.Count(),
-                        Weight = parcels.Sum(parcel => parcel.Weight),
-                        Price = parcels.Sum(parcel => parcel.Price),
-                        Parcels = parcels
+                        LetterCount = parcels.Count,
+                        Weight = parcels.Where(parcel => parcel.BagId == bag.Id).Sum(parcel => parcel.Weight),
+                        Price = parcels.Where(parcel => parcel.BagId == bag.Id).Sum(parcel => parcel.Price),
                     };
+                    
                     await _bagRepository.Update(parcelBag);
                 }
                 else if ((Bag.BagType) bag.Type == Bag.BagType.Letter)
@@ -172,6 +224,21 @@ namespace BLL.Services
             await _shipmentRepository.Update(shipment);
             
             return shipmentId;
+        }
+
+        public Shipment CreateErrorMessage(Shipment shipment)
+        {
+            var errorShipment = new Shipment
+            {
+                Id = shipment.Id,
+                ShipmentNumber = "Shipment number must be unique.",
+                Airport = shipment.Airport,
+                FlightNumber = shipment.FlightNumber,
+                FlightDate = shipment.FlightDate,
+                IsFinalized = shipment.IsFinalized,
+            };
+
+            return errorShipment;
         }
 
         public bool IsShipmentNumberUnique(string shipmentNumber)

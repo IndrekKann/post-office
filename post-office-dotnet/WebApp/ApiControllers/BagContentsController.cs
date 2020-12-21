@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using BLL.Services;
+using Domain;
 using Microsoft.AspNetCore.Mvc;
 using PublicAPI.DTO;
 
@@ -15,6 +17,18 @@ namespace WebApp.ApiControllers
         public BagContentsController(ShipmentService service)
         {
             _service = service;
+        }
+        
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<string>>> GetParcelNumbers()
+        {
+            return Ok(await _service.GetAllParcelNumbers());
+        }
+                
+        [HttpGet("{shipmentId}")]
+        public async Task<ActionResult<IEnumerable<Parcel>>> GetBags(Guid shipmentId)
+        {
+            return Ok(await _service.GetAllParcelsForShipment(shipmentId));
         }
 
         [HttpPost]

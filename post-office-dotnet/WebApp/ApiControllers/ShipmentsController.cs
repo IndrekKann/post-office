@@ -51,15 +51,13 @@ namespace WebApp.ApiControllers
         [HttpPost]
         public async Task<ActionResult<Shipment>> PostShipment(Shipment shipment)
         {
-            var shipmentId = await _service.CreateShipment(shipment);
-
-            if (shipmentId == null)
+            if (_service.IsShipmentNumberUnique(shipment.ShipmentNumber))
             {
-                ModelState.AddModelError("shipmentNumber", "Shipment number must be unique.");
-                return BadRequest(ModelState);
+                var shipmentId = await _service.CreateShipment(shipment);
+                return CreatedAtAction("GetShipment", new { id = shipmentId }, shipment);
             }
-
-            return CreatedAtAction("GetShipment", new { id = shipmentId }, shipment);
+            _service.CreateErrorMessage(shipment);
+            return BadRequest(shipment);
         }
         
         [HttpDelete("{id}")]

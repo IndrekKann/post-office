@@ -4,15 +4,17 @@ import ContentForm from "../components/ContentForm";
 import LoadingSpinner from "../components/LoadingSpinner";
 import BagAPI from "../api/BagAPI";
 import ShipmentAPI from "../api/ShipmentAPI";
-import IBag from "../interfaces/IBag";
 import IShipment from "../interfaces/IShipment";
+import IBag from "../interfaces/IBag";
+import IParcel from "../interfaces/IParcel";
+import BagContentAPI from "../api/BagContentAPI";
 
 interface Props extends RouteComponentProps<{ id: string }> {}
 
 const AddContentToBags: React.FC<Props> = ({ match }) => {
-    const emptyBags: IBag[] = [];
     const [shipment, setShipment] = useState({} as IShipment);
-    const [bags, setBags] = useState(emptyBags);
+    const [bags, setBags] = useState([] as IBag[]);
+    const [parcels, setParcels] = useState([] as IParcel[]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -22,8 +24,11 @@ const AddContentToBags: React.FC<Props> = ({ match }) => {
         ShipmentAPI.getShipmentById(match.params.id).then((shipment) => {
             setShipment(shipment);
         });
+        BagContentAPI.getAllForShipment(match.params.id).then((parcels) => {
+            setParcels(parcels);
+        });
         setLoading(false);
-    }, []);
+    }, [match.params.id]);
 
     if (loading) {
         return <LoadingSpinner />;
@@ -35,6 +40,7 @@ const AddContentToBags: React.FC<Props> = ({ match }) => {
             shipmentNumber={shipment.shipmentNumber}
             isFinalized={shipment.isFinalized}
             bags={bags}
+            parcels={parcels}
         />
     );
 };

@@ -7,5 +7,6 @@ namespace PublicAPI.DTO
     {
         public Guid ShipmentId { get; set; }
         public ICollection<BagDTO> Bags { get; set; } = default!;
+        public ICollection<ParcelDTO>? Parcels { get; set; }
     }
 }

@@ -20,7 +20,7 @@ const Bags: React.FC<Props> = ({ match, history, location }) => {
                     variant="contained"
                     color="primary"
                     href={`/add/${match.params.id}`}
-                    style={{ marginRight: "10em" }}
+                    style={{ marginRight: "3.5em" }}
                 >
                     Edit bags
                 </Button>
@@ -28,9 +28,17 @@ const Bags: React.FC<Props> = ({ match, history, location }) => {
                     variant="contained"
                     color="primary"
                     href={`/content/${match.params.id}`}
-                    style={{ marginLeft: "10em" }}
+                    style={{ marginRight: "3.5em", marginLeft: "3.5em" }}
                 >
                     Edit content
+                </Button>
+                <Button
+                    variant="contained"
+                    color="primary"
+                    href={`/finalize/${match.params.id}`}
+                    style={{ marginLeft: "3.5em" }}
+                >
+                    Finalize shipment
                 </Button>
             </div>
         </div>
